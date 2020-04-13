@@ -1,10 +1,15 @@
 .App {
-  text-align: center;
 }
 
 .App-logo {
   height: 40vmin;
   pointer-events: none;
+}
+
+.hide {
+  &--true{
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -36,3 +41,5 @@
     transform: rotate(360deg);
   }
 }
+
+@import "./modules/network/index.scss"

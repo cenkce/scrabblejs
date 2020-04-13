@@ -9,7 +9,7 @@ export function SceneProvider(props: PropsWithChildren<{ width: number, height: 
 
     useLayoutEffect(() => {
         element.current = document.createElement('canvas');
-        setPixi(new Application({ width: props.width, height: props.height, view: element.current }));
+        setPixi(new Application({resizeTo: window, view: element.current }));
     }, []);
 
     return <SceneContext.Provider value={pixi}>

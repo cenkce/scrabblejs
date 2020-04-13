@@ -1,14 +1,19 @@
 import React from 'react';
-import './App.css';
+import './App.scss';
 import { SceneProvider } from './core/scene/SceneProvider';
 import { Game } from './modules/game/Game';
+import { NetworkProvider } from './modules/network/Network';
+import { NetworkPanel } from './modules/network/NetworkPanel';
 
 function App() {
   return (
     <div className="App">
-      <SceneProvider height={600} width={1000}>
+      <NetworkProvider>
+        <NetworkPanel></NetworkPanel>
+        <SceneProvider height={600} width={1000}>
           <Game />
-      </SceneProvider>
+        </SceneProvider>
+      </NetworkProvider>
     </div>
   );
 }

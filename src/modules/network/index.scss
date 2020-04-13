@@ -1,0 +1,32 @@
+.NetworkPanel {
+  background-color: white;
+  width: 42rem;
+  height: 6rem;
+  display: flex;
+  position: absolute;
+  left: calc(50% - 21rem);
+  padding: 1.2rem;
+  box-sizing: border-box;
+  > div {
+    flex: 1;
+  }
+  
+  &_status {
+    flex-grow: 1;
+    line-height: 1rem;
+  }
+
+  &_networkId {
+    background-color: #b3b3b3;
+    font-size: 0.9rem;
+  }
+
+  &_nav {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    > div:first-child {
+      margin-bottom: 1rem;
+    }
+  }
+}
