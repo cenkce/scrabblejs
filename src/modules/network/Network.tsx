@@ -47,7 +47,7 @@ export function useNetworkConnect() {
   const setStatus = useContext(NetworkChangeStatusContext);
   const status = useContext(NetworkStatusContext);
   const peerRef = useRef<Peer | null>(null);
-  const tunnel$ = useMemo(() => new Subject(), []);
+  const tunnel$ = useMemo(() => new Subject<{peerCount: number}>(), []);
 
   useEffect(() => {
     if (status >= NetworkStatus.IDLE) {

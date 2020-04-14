@@ -13,22 +13,19 @@ export function NetworkPanel() {
   const [peerCount, setPeerCount] = useState(0);
 
   useEffect(() => {
-    if (!gameService.current)
-      return;
-
-    let subscription = gameService.current.observable$.subscribe(({peerCount}) => {
+    let subscription = networkService.observable$.subscribe(({peerCount}) => {
       setPeerCount(peerCount);
     });
     return () => {
       subscription.unsubscribe();
     }
-  }, [status]);
+  }, [networkService]);
 
   const clientConnectHandler = useCallback(() => {
     if (!idtextRef.current || !idtextRef.current.value)
       return;
     networkService.connectasClient(idtextRef.current.value);
-  }, [networkService])
+  }, [networkService]);
 
 
   return <div className="NetworkPanel">
