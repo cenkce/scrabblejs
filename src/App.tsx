@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.scss';
 import { SceneProvider } from './core/scene/SceneProvider';
-import { Game } from './modules/game/Game';
+import { Game } from './modules/game';
 import { NetworkProvider } from './modules/network/Network';
 import { NetworkPanel } from './modules/network/NetworkPanel';
 

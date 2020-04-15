@@ -1,0 +1,12 @@
+.TileRack {
+  position: absolute;
+  bottom: 0;
+  height: 6rem;
+  width: 40rem;
+  background-color: white;
+  position: absolute;
+  left: calc(50% - 20rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+}

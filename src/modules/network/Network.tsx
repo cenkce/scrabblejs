@@ -95,7 +95,6 @@ export function useNetworkConnect() {
       peer.on('disconnected', function () {
         console.log('Connection lost. Please reconnect');
 
-        // Workaround for peer.reconnect deleting previous id
         if (peerRef.current) {
           peerRef.current.reconnect();
           setStatus(NetworkStatus.CONNECTING);
