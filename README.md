@@ -1,6 +1,6 @@
 # Scrabblejs
 
-https://scrabblejs.cenkce.com/]
+https://scrabblejs.cenkce.com
 
 ## Available Scripts
 
