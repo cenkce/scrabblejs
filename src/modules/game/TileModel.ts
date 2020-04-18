@@ -1,4 +1,3 @@
-export type Tile = {
-  text: string;
-  worth: number;
-}
+import { Letter } from "../letters";
+
+export type Tile = Letter;

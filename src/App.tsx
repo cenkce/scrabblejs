@@ -1,9 +1,9 @@
 import React from 'react';
 import './App.scss';
 import { SceneProvider } from './core/scene/SceneProvider';
-import { Game } from './modules/game';
 import { NetworkProvider } from './modules/network/Network';
 import { NetworkPanel } from './modules/network/NetworkPanel';
+import { GameModule } from './modules/game';
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
       <NetworkProvider>
         <NetworkPanel></NetworkPanel>
         <SceneProvider height={600} width={1000}>
-          <Game />
+          <GameModule />
         </SceneProvider>
       </NetworkProvider>
     </div>

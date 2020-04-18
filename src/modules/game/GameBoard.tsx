@@ -1,7 +1,7 @@
 import { useScene } from "../../core/scene/SceneProvider";
-import { useRef, useEffect, useCallback, useState, PropsWithChildren } from "react";
+import { useRef, useEffect, useCallback, useState, PropsWithChildren, DragEventHandler } from "react";
 import React from "react";
-import { Sprite, utils, IPoint } from "pixi.js";
+import { Sprite, utils, IPoint, Point, Texture, Text, interaction, Container } from "pixi.js";
 import {Subject, fromEvent} from "rxjs"
 import {mergeMap, switchMap, takeUntil} from "rxjs/operators"
 import { TileRack } from "./TileRack";
@@ -16,17 +16,35 @@ function useGlobalKeyboarEvents(cb: (this: HTMLElement, ev: KeyboardEvent) => an
     }, [cb]);
 }
 
+class Tile extends Sprite {
+    private text: Text;
+    private bg: Sprite;
+    constructor(text: string, scale: number = 1){
+        super();
+        this.text = new Text(text);
+        this.bg = new Sprite(Texture.WHITE);
+        this.bg.tint = 0xF0EFC2;
+        this.bg.width = 50 * scale;
+        this.bg.height = 50 * scale;
+        this.bg.anchor.set(0.5, 0.5);
+        this.text.anchor.set(0.5, 0.5);
+        this.addChild(this.bg);
+        this.addChild(this.text);
+    }
+}
+
 export function GameBoard(props: PropsWithChildren<{}>){
     const pixi = useScene();
     const root = useRef<HTMLDivElement | null>(null);
     const bgSprite = useRef<Sprite | null>(null);
-    const boardSprite = useRef<Sprite | null>(null);
+    const boardSprite = useRef<Container | null>(null);
     const [loaded, setLoaded] = useState<boolean>(false);
+    const addTile = useRef<((text: string, pos: {x: number, y: number}) => void )| null>()
 
     useGlobalKeyboarEvents(useCallback((e) => {
-        if(!e.ctrlKey || !bgSprite.current)
+        if(!e.ctrlKey || !boardSprite.current)
             return false;
-        let zoomRatio = bgSprite.current.scale.x;
+        let zoomRatio = boardSprite.current.scale.x;
         switch (e.key) {
             case 'z':
                 zoomRatio = zoomRatio <= 0 ? 0.1 : zoomRatio - 0.1;
@@ -39,14 +57,16 @@ export function GameBoard(props: PropsWithChildren<{}>){
             default:
                 break;
         }
-        bgSprite.current.scale.set(zoomRatio, zoomRatio);
+        boardSprite.current.scale.set(zoomRatio, zoomRatio);
     }, []));
 
     useEffect(() => {
         if(pixi && pixi.view && root.current && !boardSprite.current){
             const stage = pixi.stage;
             root.current.appendChild(pixi.view);
-            boardSprite.current = new Sprite();
+            pixi.renderer.plugins.interaction.autoPreventDefault = true;
+
+            boardSprite.current = new Container();
             stage.addChild(boardSprite.current);
 
             pixi.loader.load()
@@ -62,11 +82,19 @@ export function GameBoard(props: PropsWithChildren<{}>){
             const subject = new Subject();
             const sprite = new Sprite(utils.TextureCache.bg);
             const board = boardSprite.current;
-            sprite.pivot.set(sprite.width/2, sprite.height/2);
-            boardSprite.current?.pivot.set(-pixi.screen.width/2, -pixi.screen.height/2);
+            board.position.set( pixi.screen.width/2,  pixi.screen.height/2);
+            board.interactive = true;
+            sprite.anchor.set(0.5, 0.5);
+            // board?.anchor.set(0.5, 0.5);
             bgSprite.current = sprite;
-            boardSprite.current?.addChild(sprite);
+            
+            board?.addChild(sprite);
             const pos = {x: 0, y: 0};
+            addTile.current = (text, pos) => {
+                const tile = new Tile(text, bgSprite.current?.scale.x);
+                tile.position.set(pos.x, pos.y);
+                board.addChild(tile);
+            }
 
             const subscription = fromEvent<MouseEvent>(pixi.view, "mousedown").pipe(
                 switchMap((e) => {
@@ -87,7 +115,22 @@ export function GameBoard(props: PropsWithChildren<{}>){
         }
     }, [loaded])
 
-    return <div className="Game" ref={root}>
+    const dropHandler: DragEventHandler = (e) => {
+        e.preventDefault();
+        const text = e.dataTransfer.getData('tile');
+        const data = new interaction.InteractionData();
+        if(boardSprite.current && addTile.current)
+            addTile.current(text, data.getLocalPosition(boardSprite.current, undefined, new Point(e.clientX, e.clientY)));
+    }
+
+    const dragOverHandler: DragEventHandler = (e) => {
+        e.preventDefault();
+        if(typeof e.dataTransfer.getData('tile') === 'string'){
+        }
+        e.dataTransfer.dropEffect = "move";
+    }
+
+    return <div onDragOver={dragOverHandler} onDrop={dropHandler} className="Game" ref={root}>
         {props.children}
     </div>;
 }
