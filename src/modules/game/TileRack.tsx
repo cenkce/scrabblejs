@@ -4,6 +4,6 @@ import { TileView } from "./TileView";
 
 export function TileRack(props: PropsWithChildren<{tiles: Tile[], onDragTile: () => void}>){
   return <div className="TileRack">
-    {props.tiles.map(tile => <TileView onDrag={props.onDragTile} {...tile}></TileView>)}
+    {props.tiles.map((tile, index) => <TileView key={index+"-"+tile.letter} onDrag={props.onDragTile} {...tile}></TileView>)}
   </div>;
 }
