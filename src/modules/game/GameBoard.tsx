@@ -1,20 +1,10 @@
 import { useScene } from "../../core/scene/SceneProvider";
 import { useRef, useEffect, useCallback, useState, PropsWithChildren, DragEventHandler } from "react";
 import React from "react";
-import { Sprite, utils, IPoint, Point, Texture, Text, interaction, Container } from "pixi.js";
+import { Sprite, utils, Point, Texture, Text, interaction, Container } from "pixi.js";
 import {Subject, fromEvent} from "rxjs"
-import {mergeMap, switchMap, takeUntil} from "rxjs/operators"
-import { TileRack } from "./TileRack";
-
-function useGlobalKeyboarEvents(cb: (this: HTMLElement, ev: KeyboardEvent) => any){
-    useEffect(() => {
-        let fn = cb;
-        document.body.addEventListener('keydown', fn);
-        return () => {
-            document.body.removeEventListener('keydown', fn);
-        }
-    }, [cb]);
-}
+import {switchMap, takeUntil} from "rxjs/operators"
+import { useGlobalKeyboarEvents } from "core/useGlobalKeyboarEvents";
 
 class Tile extends Sprite {
     private text: Text;
@@ -47,11 +37,11 @@ export function GameBoard(props: PropsWithChildren<{}>){
         let zoomRatio = boardSprite.current.scale.x;
         switch (e.key) {
             case 'z':
-                zoomRatio = zoomRatio <= 0 ? 0.1 : zoomRatio - 0.1;
+                zoomRatio = Math.max(0.1, zoomRatio - 0.1);
                 e.preventDefault();
                 break;
             case 'x':
-                zoomRatio = zoomRatio <= 0 ? 0.1 : zoomRatio + 0.1;
+                zoomRatio = Math.min(1, zoomRatio + 0.1) 
                 e.preventDefault();
                 break;
             default:
