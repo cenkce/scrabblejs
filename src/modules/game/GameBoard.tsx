@@ -5,6 +5,8 @@ import { Sprite, utils, Point, Texture, Text, interaction, Container } from "pix
 import {Subject, fromEvent} from "rxjs"
 import {switchMap, takeUntil} from "rxjs/operators"
 import { useGlobalKeyboarEvents } from "core/useGlobalKeyboarEvents";
+import { GameBoardShape } from "./GameBoardShape";
+import { CELL_SIZE } from "./constants";
 
 class Tile extends Sprite {
     private text: Text;
@@ -14,8 +16,8 @@ class Tile extends Sprite {
         this.text = new Text(text);
         this.bg = new Sprite(Texture.WHITE);
         this.bg.tint = 0xF0EFC2;
-        this.bg.width = 50 * scale;
-        this.bg.height = 50 * scale;
+        this.bg.width = CELL_SIZE * scale;
+        this.bg.height = CELL_SIZE * scale;
         this.bg.anchor.set(0.5, 0.5);
         this.text.anchor.set(0.5, 0.5);
         this.addChild(this.bg);
@@ -58,6 +60,7 @@ export function GameBoard(props: PropsWithChildren<{}>){
 
             boardSprite.current = new Container();
             stage.addChild(boardSprite.current);
+            // stage.addChild(new GameBoardGraphics());
 
             pixi.loader.load()
                 .add("bg", '/assets/Scrabbleboard.svg')
@@ -69,10 +72,11 @@ export function GameBoard(props: PropsWithChildren<{}>){
 
     useEffect(() => {
         if(loaded && pixi && boardSprite.current){
-            const subject = new Subject();
-            const sprite = new Sprite(utils.TextureCache.bg);
+            // const subject = new Subject();
+            const sprite = new GameBoardShape(CELL_SIZE);
+            // sprite.addChild(new GameBoardGraphics())
             const board = boardSprite.current;
-            board.position.set( pixi.screen.width/2,  pixi.screen.height/2);
+            // board.position.set( pixi.screen.width/2,  pixi.screen.height/2);
             board.interactive = true;
             sprite.anchor.set(0.5, 0.5);
             // board?.anchor.set(0.5, 0.5);
@@ -124,3 +128,4 @@ export function GameBoard(props: PropsWithChildren<{}>){
         {props.children}
     </div>;
 }
+
