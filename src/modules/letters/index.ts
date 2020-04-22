@@ -1,5 +1,4 @@
 import { Letters } from "./Letters";
-import { type } from "os";
 
 export const LettersCollection = {
   tr: new Letters(
