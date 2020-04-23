@@ -27,7 +27,7 @@ class Tile extends Sprite {
     }
 }
 
-export function GameBoard(props: PropsWithChildren<{}>) {
+export function GameBoard(props: PropsWithChildren<{onDrop: (index: number) => void}>) {
     const pixi = useScene();
     const root = useRef<HTMLDivElement | null>(null);
     const bgSprite = useRef<Sprite | null>(null);
@@ -110,6 +110,7 @@ export function GameBoard(props: PropsWithChildren<{}>) {
     const dropHandler: DragEventHandler = (e) => {
         e.preventDefault();
         const text = e.dataTransfer.getData('tile');
+        const index = e.dataTransfer.getData('index');
         const data = new interaction.InteractionData();
         if (boardSprite.current && addTile.current) {
             const localPos = data.getLocalPosition(boardSprite.current, undefined, new Point(e.clientX, e.clientY));
@@ -121,6 +122,7 @@ export function GameBoard(props: PropsWithChildren<{}>) {
             });
 
             addTile.current(text, boardPos);
+            props.onDrop(parseInt(index));
         }
     }
 
