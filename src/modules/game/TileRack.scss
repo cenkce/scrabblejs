@@ -2,11 +2,23 @@
   position: absolute;
   bottom: 0;
   height: 6rem;
-  width: 40rem;
+  width: 46rem;
   background-color: white;
   position: absolute;
-  left: calc(50% - 20rem);
+  left: calc(50% - 23rem);
   display: flex;
   align-items: center;
   justify-content: space-evenly;
+  > div:first-child {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    margin: 1rem;
+  }
+  > div:nth-child(2) {
+    flex: 1;
+    max-width: 5rem;
+    margin-left: 1rem;
+  }
+  user-select: none;
 }
