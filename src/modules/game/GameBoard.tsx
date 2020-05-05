@@ -4,7 +4,7 @@ import React from "react";
 import { Sprite, Point, Texture, Text, interaction, Container } from "pixi.js";
 import { fromEvent } from "rxjs"
 import { switchMap, takeUntil } from "rxjs/operators"
-import { useGlobalKeyboarEvents } from "core/useGlobalKeyboarEvents";
+import { useGlobalKeyboarEvents as useGlobalKeyboardEvents } from "core/useGlobalKeyboarEvents";
 import { GameBoardShape } from "./GameBoardShape";
 import { CELL_SIZE, CELL_CONTENT_SIZE, CELL_BORDER_SIZE } from "./constants";
 import { calculateCellPosition } from "./utils/calculateCellPosition";
@@ -35,7 +35,7 @@ export function GameBoard(props: PropsWithChildren<{onDrop: (index: number) => v
     const [loaded, setLoaded] = useState<boolean>(false);
     const addTile = useRef<((text: string, pos: { x: number, y: number }) => void) | null>()
 
-    useGlobalKeyboarEvents(useCallback((e) => {
+    useGlobalKeyboardEvents(useCallback((e) => {
         if (!e.ctrlKey || !boardSprite.current)
             return false;
         let zoomRatio = boardSprite.current.scale.x;

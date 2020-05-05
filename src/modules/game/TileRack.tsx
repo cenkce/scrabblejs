@@ -4,7 +4,7 @@ import { TileView } from "./TileView";
 import { Button } from "shared/Button";
 
 export function TileRack(
-  props: PropsWithChildren<{ tiles: Tile[]; onDragTile: () => void; isValid: boolean }>
+  props: PropsWithChildren<{ tiles: Tile[]; onDragTile: () => void; isValid: boolean, onTurnDone: () => void }>
 ) {
   return (
     <div className="TileRack" onDrop={(e) => {e.preventDefault(); e.stopPropagation()}}>
