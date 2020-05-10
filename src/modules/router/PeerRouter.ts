@@ -1,5 +1,5 @@
 import { PeerResponse } from "./PeerResponse";
-import { PeerRequest } from "./PeerRequest";
+import { PeerRequest } from "./PeerSignal";
 import { PeerRouteMethod } from "./PeerRouterMethod";
 
 type RouteCallback = (request: PeerRequest) => PeerResponse;

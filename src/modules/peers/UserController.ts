@@ -1,4 +1,4 @@
-import { Controller } from "modules/router/Controller";
+import { Controller } from "./Application";
 
 @Controller("path")
 export class UserController {

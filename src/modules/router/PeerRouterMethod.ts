@@ -1,7 +1,7 @@
 import { PeerRequestMethod } from "./PeerRequestMethod";
 import { match, MatchFunction } from "path-to-regexp";
 import { PeerContext } from "./PeerContext";
-import { PeerRequest } from "./PeerRequest";
+import { PeerRequest } from "./PeerSignal";
 
 export type PeerRequestHandler = (ctx: PeerContext, next: () => void) => void;
 
@@ -57,7 +57,7 @@ export class PeerRouteMethod {
   }
 
   match(request: PeerRequest) {
-    if (request.method === this.method && this._match(request.path)) {
+    if (request.payload.method === this.method && this._match(request.payload.path)) {
       return this.handlersIterator();
     }
 

@@ -11,7 +11,7 @@ import Peer, { DataConnection } from "peerjs";
 import { Subject, Observable } from "rxjs";
 import { NetworkStatus } from "./NetworkStatus";
 import shortid from "shortid";
-import { PeerRequest } from "../router/PeerRequest";
+import { PeerRequest } from "../router/PeerSignal";
 
 export const NetworkSetIDContext = createContext<(id: string) => void>(
   () => {}
