@@ -3,7 +3,7 @@ import { match, MatchFunction } from "path-to-regexp";
 import { PeerContext } from "./PeerContext";
 import { PeerRequest } from "./PeerSignal";
 
-export type PeerRequestHandler = (ctx: PeerContext, next: () => void) => void;
+export type PeerRequestHandler = (request: PeerRequest, next: () => void) => any;
 
 function handlersCharger(
   handlersCall: (() => PeerRequestHandler)[] = []
@@ -39,26 +39,24 @@ function handlersCharger(
 
 export class PeerRouteMethod {
   private _match: MatchFunction<any>;
-  private addHandler: Generator<undefined, void, PeerRequestHandler>;
-  private handlersIterator: () => Generator<() => PeerRequestHandler, void, unknown>;
 
   constructor(
     private rootPath: string,
+    private handler: PeerRequestHandler,
     private method: PeerRequestMethod = "GET",
-    [addHandler, iterateHandlers] = handlersCharger()
   ) {
     this._match = match(this.rootPath);
-    this.addHandler = addHandler();
-    this.handlersIterator = iterateHandlers;
   }
 
-  handle(path: string, fn: PeerRequestHandler){
-    this.addHandler.next(fn);
+  handle(request: PeerRequest){
+    return new Promise((resolve, reject) => {
+      return this.handler(request, resolve);
+    });
   }
 
   match(request: PeerRequest) {
     if (request.payload.method === this.method && this._match(request.payload.path)) {
-      return this.handlersIterator();
+      return true;
     }
 
     return false;

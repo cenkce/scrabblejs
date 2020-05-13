@@ -1,10 +1,16 @@
 import { IPeerClient } from "./IPeerClient";
-import { createControllerDecorator } from "./decorator/createControllerDecorator";
+import {
+  controllerFactory,
+} from "./decorator/createControllerDecorator";
+import { createListenerDecorator } from "./decorator/createListenerDecorator";
+import { share } from "rxjs/operators";
+/**
+ * Returns Controller and EventListener decorators
+ *
+ * @param client
+ */
 export function PeerApplication(client: IPeerClient) {
-  const controllersRegistery: {[key: string]: Object} = {};
-  const register = (path: string, controller: Object) => {
-    controllersRegistery[path] = controller;
-  }
   const sink = client.sink();
-  return [createControllerDecorator(register)];
+  const Controller = controllerFactory(sink.requests$.pipe(share()));
+  return [Controller, createListenerDecorator(sink.events$)] as const;
 }
