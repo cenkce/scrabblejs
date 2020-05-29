@@ -1,10 +1,14 @@
 import { Observable } from "rxjs/internal/Observable";
 import { PeerEvent, PeerRequest } from "./PeerSignal";
+import { PeerClientState } from "./PeerClientState";
 
 export interface IPeerClient {
-  connectPeer(id: string):void;
   sink(): {
     events$: Observable<PeerEvent>,
-    requests$: Observable<PeerRequest>
-  }
+    requests$: Observable<PeerRequest>,
+    open$: Observable<any>,
+    changeState$: Observable<PeerClientState>
+  };
+  connect: (id:string) => (() => void) | undefined;
+  emit(req: PeerRequest): void;
 }

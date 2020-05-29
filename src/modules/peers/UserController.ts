@@ -1,13 +1,15 @@
 import { Controller } from "./Application";
 import { Post, Get, Delete } from "modules/router/decorator/createControllerDecorator";
 
-export const UserController$ = Controller("user").pipe(
+export const UserController$ = Controller("user")(
   Post("", () => {}),
-  Get("", () => {}),
+  Get("/", (req, res, next) => {
+    res.payload.data = "data 1";
+    console.log("Get 1");
+  }),
+  Get("/", (req, res, next) => {
+    console.log("Get 2", res.payload.data);
+  }),
   Delete("", () => {}),
   Get(":id", () => {})
 );
-
-UserController$.subscribe((response) => {
-  console.log(response);
-}, );

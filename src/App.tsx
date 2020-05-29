@@ -4,6 +4,7 @@ import { SceneProvider } from './core/scene/SceneProvider';
 import { NetworkProvider } from './modules/network/Network';
 import { NetworkPanel } from './modules/network/NetworkPanel';
 import { GameModule } from './modules/game';
+import "./modules/peers"
 
 function App() {
   return (

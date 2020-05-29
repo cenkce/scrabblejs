@@ -1,7 +1,7 @@
 import { PeerApplication } from "modules/router/PeerApplication";
 import { PeerjsClient } from "modules/router/PeerjsAdapter";
+import { UserController$ } from "./UserController";
 
-const [Controller, Listener] = PeerApplication(new PeerjsClient());
+const [PeerService, Controller, Listener] = PeerApplication(new PeerjsClient());
 
-export {Controller, Listener};
-
+export {PeerService, Controller, Listener};

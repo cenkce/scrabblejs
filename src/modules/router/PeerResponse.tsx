@@ -1,6 +1,8 @@
+import { JSONElement, JSONValue } from "./JSONElement";
+
 export type PeerResponse = {
   ok: boolean;
   status: number;
   statusText: string;
-  payload: any;
+  payload: {[key: string]: JSONValue | JSONElement };
 };

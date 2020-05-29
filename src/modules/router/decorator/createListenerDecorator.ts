@@ -1,4 +1,4 @@
-import "reflect-metadata";
+// import "reflect-metadata";
 import { PeerEvent } from "../PeerSignal";
 import { Observable } from "rxjs";
 import { filter } from "rxjs/operators";

@@ -2,12 +2,14 @@ import React, { PropsWithChildren, MouseEventHandler } from "react";
 import { Tile } from "./TileModel";
 import { TileView } from "./TileView";
 import { Button } from "shared/Button";
+import { PeerService } from "modules/peers/Application";
+import { PeerSignalType } from "modules/router/PeerSignal";
 
 export function TileRack(
   props: PropsWithChildren<{ tiles: Tile[]; onDragTile: () => void; isValid: boolean, onTurnDone: () => void }>
 ) {
   return (
-    <div className="TileRack" onDrop={(e) => {e.preventDefault(); e.stopPropagation()}}>
+    <div className="TileRack">
       <div className="TileRack_tiles">
         {props.tiles.map((tile, index) => (
           <TileView
@@ -19,7 +21,18 @@ export function TileRack(
         ))}
       </div>
       <div>
-        <Button type={"warn"} onClick={() => {}}>
+        <Button type={"warn"} onClick={() => {
+          PeerService.emit({
+            type: PeerSignalType.REQUEST,
+            payload: {
+              body: {
+                name: "cenk",
+              },
+              method: "GET",
+              path: "users",
+            },
+          })
+        }}>
           Turn
         </Button>
       </div>

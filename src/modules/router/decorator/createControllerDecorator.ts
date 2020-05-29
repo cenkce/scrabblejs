@@ -1,48 +1,57 @@
 import { PeerRequest } from "../PeerSignal";
-import { Observable, OperatorFunction, of } from "rxjs";
-import { filter, scan, switchMap, map, concatMap } from "rxjs/operators";
-import { PeerRouteMethod } from "../PeerRouterMethod";
-import { pipeFromArray } from "rxjs/internal/util/pipe";
+import { Observable, OperatorFunction, of, from, empty } from "rxjs";
+import {
+  switchMap,
+  map,
+  mergeScan,
+  mergeMap,
+} from "rxjs/operators";
+import { PeerRouteMethod, PeerRequestHandler } from "../PeerRouterMethod";
+import { PeerResponse } from "../PeerResponse";
 
 export function controllerFactory(request$: Observable<PeerRequest>) {
   return function Controller(
     rootPath: string
-  ): {
-    pipe: (
-      ...args: OperatorFunction<PeerRouteMethod[], PeerRouteMethod[]>[]
-    ) => Observable<unknown[]>;
-  } {
-    const routes$ = of<PeerRouteMethod[]>([]);
+  ): OperatorFunction<PeerRouteMethod[], PeerResponse> {
+    const operator = switchMap<PeerRouteMethod[], Observable<PeerResponse>>((routes) => {
+      return request$.pipe(
+        mergeMap((request) => {
+          let hasNext = true;
+          const response: PeerResponse = {ok: true, status: 200, statusText: "", payload: {}};
+          const iterator = (function* getRoute(){
+            for(let route of routes){
+              if(route.match(request)){
+                hasNext = false;
+                yield route.handle(request, response, () => {hasNext = true});
+              }
+            }
+          })();
 
-    return {
-      pipe(...args) {
-        return pipeFromArray(args)(routes$).pipe(
-          switchMap((routes) => {
-            return request$.pipe(
-              map(
-                (request) =>
-                  [
-                    request,
-                    routes.filter((route) => route.match(request)),
-                  ] as const
-              ),
-              filter(([request, routes]) => {
-                return !!routes.length;
-              }),
-              concatMap(([request, routes]) => {
-                return Promise.all(
-                  routes.map((route) => route.handle(request))
-                );
-              })
-            );
-          })
-        );
-      },
-    };
+          return from(iterator).pipe(
+            mergeScan(
+              (response, current) => {
+                console.log(response, current);
+                if(!hasNext){
+                  iterator.return();
+                }
+                if(!!current &&  typeof current === "object" && current !== null && !Array.isArray(current)){
+                  Object.assign(response.payload, current);
+                }
+
+                return of(response);
+              },
+              response,
+              1
+            )
+          );
+        })
+      );
+    });
+
+    return operator;
   };
 }
 
-type PeerRequestHandler<TRequest> = (request: PeerRequest<TRequest>, next: (value?: unknown) => void ) => void;
 
 export function Post<TRequest = unknown>(
   path: string,
