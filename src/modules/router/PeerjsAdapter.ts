@@ -73,9 +73,9 @@ function createEvent(
     payload: { eventName, body, targetPeerId },
   };
 }
-
 export class PeerjsClient implements IPeerClient {
-  private peerClient = new Peer({ path: "app", host: "localhost", port:9000, debug: 2 });
+  private options = process.env.NODE_ENV === "development" ? { path: "app", host: "localhost", port:9000, debug: 2 } : {}
+  private peerClient = new Peer(this.options);
   private peerId: string = "";
   private state$ = new BehaviorSubject<Partial<PeerClientState>>(createInitialPeerClientState());
   private updateState$ = this.state$.pipe(
@@ -117,38 +117,6 @@ export class PeerjsClient implements IPeerClient {
     })
   );;
 
-  // private incomingConnectionOpen$ = this.incomingConnection$
-  // private incomingConnectionClose$ = this.incomingConnection$.pipe(
-  //   mergeMap((conn) => {
-  //     return ;
-  //   })
-  // );
-  // private peerSignals$ = this.incomingConnection$.pipe(
-    // mergeMap((conn) => )
-  // );
-  // private masterEmitter$ = (() => {
-  //   let conn: Peer.DataConnection | null;
-  //   this.incomingConnection$.subscribe((cn) => {
-  //     this.state$.next({
-  //       peerCount: Object.keys(this.peerClient.connections).length,
-  //     });
-  //     console.log("Connected", this.peerClient.connections);
-  //     conn = cn;
-  //   });
-  //   this.incomingConnectionClose$.subscribe(() => {
-  //     console.log("Disconnected");
-  //     conn = null;
-  //   });
-  //   this.serverError$.subscribe(() => {
-  //     console.log("Connection Error");
-  //     conn = null;
-  //     this.peerClient.reconnect();
-  //   });
-  //   return (req: PeerRequest | PeerEvent) => {
-  //     if (!conn) throw new Error("Not Connected");
-  //     conn.send(JSON.stringify(req));
-  //   };
-  // })();
   private events$ = this.incomingConnection$.pipe(
     map<string, PeerEvent>((data) => JSON.parse(data)),
     filter((data) => instacenOfPeerEvent(data))
