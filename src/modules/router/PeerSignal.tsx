@@ -28,7 +28,7 @@ export type PeerEvent<TBody = any> = {
 
 export type PeerRequest<TBody = any> = {
   type: PeerSignalType.REQUEST;
-  payload: { path: string; body: TBody; method: PeerRequestMethod };
+  payload: { path: string; body: TBody; method: PeerRequestMethod, targetPeerId: string };
 };
 
 export type PeerSignal = PeerEvent | PeerRequest;

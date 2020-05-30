@@ -1,11 +1,26 @@
 import { IPeerClient } from "./IPeerClient";
 import Peer, { DataConnection } from "peerjs";
-import { PeerClientStatus } from "./PeerClientStatus";
-import { Subject, fromEvent, Observable, BehaviorSubject} from "rxjs";
-import { PeerClientState } from "./PeerClientState";
-import { map, mergeMap, filter, share, scan } from "rxjs/operators";
-import { PeerEvent, PeerSignalType, instacenOfPeerEvent, PeerRequest, instacenOfPeerRequest } from "./PeerSignal";
-import { NetworkStatus } from "modules/network/NetworkStatus";
+import { Subject, fromEvent, Observable, BehaviorSubject, from, merge, of } from "rxjs";
+import { PeerClientState, createInitialPeerClientState } from "./PeerClientState";
+import {
+  map,
+  mergeMap,
+  filter,
+  share,
+  scan,
+  tap,
+  throttleTime,
+  takeUntil,
+  mergeScan,
+} from "rxjs/operators";
+import {
+  PeerEvent,
+  PeerSignalType,
+  instacenOfPeerEvent,
+  PeerRequest,
+  instacenOfPeerRequest,
+} from "./PeerSignal";
+import { NetworkStatus } from "modules/router/NetworkStatus";
 
 interface IStreamable<T = any> {
   sink(): Observable<T>;
@@ -14,7 +29,7 @@ interface IStreamable<T = any> {
 interface IPeerConnection<T = any> extends IStreamable<T> {}
 
 type IPeerConnectionState = {
-  status: PeerClientStatus;
+  status: NetworkStatus;
 };
 
 function fromPeerEvent<T>(peer: Peer, event: string) {
@@ -31,7 +46,10 @@ function fromPeerEvent<T>(peer: Peer, event: string) {
   );
 }
 
-function fromConnectionEvent(conn: Peer.DataConnection, event: string): Observable<string> {
+function fromConnectionEvent(
+  conn: Peer.DataConnection,
+  event: string
+): Observable<string> {
   return fromEvent<string>(
     {
       on: (event: string, cb) => {
@@ -52,107 +70,186 @@ function createEvent(
 ): PeerEvent {
   return {
     type: PeerSignalType.EVENT,
-    payload: { eventName, body, targetPeerId}
+    payload: { eventName, body, targetPeerId },
   };
 }
 
 export class PeerjsClient implements IPeerClient {
-  private peer = new Peer({ debug: 2 });
+  private peerClient = new Peer({ path: "app", host: "localhost", port:9000, debug: 2 });
   private peerId: string = "";
-  private state$ = new BehaviorSubject<Partial<PeerClientState>>({
-    status: PeerClientStatus.IDLE,
-    peerCount: 0,
-    peers: [],
-  });
-  private updateState$ = this.state$.pipe(scan<Partial<PeerClientState>, PeerClientState>((acc, curr) => {
-    return Object.assign({}, acc, curr);
-  }));
+  private state$ = new BehaviorSubject<Partial<PeerClientState>>(createInitialPeerClientState());
+  private updateState$ = this.state$.pipe(
+    scan<Partial<PeerClientState>, PeerClientState>((acc, curr) => {
+      return Object.assign({}, acc, curr);
+    }),
+    throttleTime(10)
+  );
   private handlers$ = new Subject();
   // Peers
-  private peerConnect$ = fromPeerEvent(this.peer, "open");
-  private peerDisconnect$ = fromPeerEvent(this.peer, "disconnected");
-  private peerError$ = fromPeerEvent(this.peer, "error");
-  // Master Peer
-  private onConnection$ = fromPeerEvent<DataConnection>(this.peer, "connection");
-  private onClose$ = this.onConnection$.pipe(mergeMap((conn) => {
-    return fromConnectionEvent(conn, "close");
-  }));
-  private peerSignals$ = this.onConnection$.pipe(
-    mergeMap((conn) => fromConnectionEvent(conn, "data"))
+  private serverConnect$ = fromPeerEvent<string>(this.peerClient, "open").pipe(
+    tap((id) => {
+      this.state$.next({ peerId: id, networkStatus: NetworkStatus.CONNECTED });
+    })
   );
-  private masterEmitter$ = (() => {
-    let conn: Peer.DataConnection | null;
-    this.onConnection$.subscribe(
-      (cn) => {
-        this.state$.next({ peerCount: Object.keys(this.peer.connections).length})
-        console.log("Connected", this.peer.connections);
-        conn = cn;
-      }
-    );
-    this.onClose$.subscribe(() => {
-      console.log("Disconnected");
-      conn = null;
+  private serverDisconnect$ = fromPeerEvent(this.peerClient, "disconnected").pipe(
+    tap(() => {
+      this.state$.next({ networkStatus: NetworkStatus.DISCONNECTED });
     })
-    this.peerError$.subscribe(() => {
-      console.log("Connection Error");
-      conn = null;
-      this.peer.reconnect();
+  );
+  private serverError$ = fromPeerEvent(this.peerClient, "error").pipe(
+    tap(() => {
+      this.state$.next({ networkStatus: NetworkStatus.DISCONNECTED });
     })
-    return (req: PeerRequest|PeerEvent) => {
-      if(!conn)
-        throw new Error("Not Connected");
-      conn.send(JSON.stringify(req));
-    }
-  })();
-  private events$ = this.peerSignals$.pipe(map<string, PeerEvent>((data) => JSON.parse(data)), filter(data => instacenOfPeerEvent(data)));
-  private requests$ = this.peerSignals$.pipe(map<string, PeerRequest>((data) => JSON.parse(data)), filter(data => instacenOfPeerRequest(data)));
+  );
+  private incomingConnection$ = fromPeerEvent<DataConnection>(
+    this.peerClient,
+    "connection"
+  ).pipe(
+    mergeMap((conn) => {
+      return fromConnectionEvent(conn, "open").pipe(mergeMap((id) => {
+        this.state$.next({ peerStatus: NetworkStatus.CONNECTED });
+        return fromConnectionEvent(conn, "data");
+      }),
+      takeUntil(fromConnectionEvent(conn, "close").pipe(tap(() => {
+        this.state$.next({ peerStatus: NetworkStatus.DISCONNECTED });
+      })))
+      );
+    })
+  );;
+
+  // private incomingConnectionOpen$ = this.incomingConnection$
+  // private incomingConnectionClose$ = this.incomingConnection$.pipe(
+  //   mergeMap((conn) => {
+  //     return ;
+  //   })
+  // );
+  // private peerSignals$ = this.incomingConnection$.pipe(
+    // mergeMap((conn) => )
+  // );
+  // private masterEmitter$ = (() => {
+  //   let conn: Peer.DataConnection | null;
+  //   this.incomingConnection$.subscribe((cn) => {
+  //     this.state$.next({
+  //       peerCount: Object.keys(this.peerClient.connections).length,
+  //     });
+  //     console.log("Connected", this.peerClient.connections);
+  //     conn = cn;
+  //   });
+  //   this.incomingConnectionClose$.subscribe(() => {
+  //     console.log("Disconnected");
+  //     conn = null;
+  //   });
+  //   this.serverError$.subscribe(() => {
+  //     console.log("Connection Error");
+  //     conn = null;
+  //     this.peerClient.reconnect();
+  //   });
+  //   return (req: PeerRequest | PeerEvent) => {
+  //     if (!conn) throw new Error("Not Connected");
+  //     conn.send(JSON.stringify(req));
+  //   };
+  // })();
+  private events$ = this.incomingConnection$.pipe(
+    map<string, PeerEvent>((data) => JSON.parse(data)),
+    filter((data) => instacenOfPeerEvent(data))
+  );
+  private requests$ = this.incomingConnection$.pipe(
+    map<string, PeerRequest>((data) => JSON.parse(data)),
+    filter((data) => instacenOfPeerRequest(data))
+  );
 
   private status = NetworkStatus.IDLE;
-  private connection?: DataConnection;
+  private outcomingConnection?: DataConnection;
 
   constructor() {
+    this.peerClient.on('connection', (data) =>{})
+    merge(this.serverConnect$, this.serverError$, this.serverDisconnect$).subscribe(() => {
+
+    })
   }
 
-  close(){
-    this.connection?.close();
+  close() {
+    this.outcomingConnection?.close();
   }
-  connect(id: string) {
-      // if (this.status !== NetworkStatus.CONNECTED) return;
-      this.connection = this.peer.connect(id, { reliable: true });
-      this.connection.on("open", () => {
-        console.log("opened : ", this.peer.connections);
-        this.state$.next({ peerCount: Object.keys(this.peer.connections).length})
-        this.status = NetworkStatus.CONNECTED_AS_PEER;
-        this.connection?.send(JSON.stringify({
-          type: PeerSignalType.REQUEST,
-          payload: { path: "user", body: { message: "Hello" }, method: "GET" },
-        }));
-
-      });
-      this.connection.on("data", (data) => {
-        console.log("on data ;", data);
-      });
-      this.connection.on("close", () => {
-        this.state$.next({ peerCount: Object.keys(this.peer.connections).length})
-        this.status = NetworkStatus.DISCONNECTED;
-      });
-
-    return () => {
-        this.peer.disconnect();
-        this.peer.destroy();
-      }
-  };
-
-  sink() {
-    return { 
-      events$: this.events$.pipe(share()),
-      requests$: this.requests$.pipe(share()),
-      open$: this.peerConnect$.pipe(share()),
-      changeState$: this.updateState$
+  createRequest(
+    payload: Omit<PeerRequest["payload"], "targetPeerId">
+  ): PeerRequest {
+    return {
+      type: PeerSignalType.REQUEST,
+      payload: {
+        ...payload,
+        targetPeerId: this.peerId,
+      },
+    };
+  }
+  createEvent(payload: Omit<PeerEvent["payload"], "targetPeerId">): PeerEvent {
+    return {
+      type: PeerSignalType.EVENT,
+      payload: {
+        ...payload,
+        targetPeerId: this.peerId,
+      },
     };
   }
 
-  emit(request: PeerRequest|PeerEvent) {
-    this.masterEmitter$(request);
+  connect(id: string) {
+    // if (this.status !== NetworkStatus.CONNECTED) return;
+    this.outcomingConnection = this.peerClient.connect(id, { reliable: true });
+    this.state$.next({
+      peerStatus: NetworkStatus.CONNECTING
+    });
+    this.outcomingConnection.on("open", () => {
+      console.log("opened : ", this.peerClient.connections);
+      this.state$.next({
+        peerStatus: NetworkStatus.CONNECTED,
+        peerCount: Object.keys(this.peerClient.connections).length,
+      });
+      this.outcomingConnection?.send(
+        JSON.stringify({
+          type: PeerSignalType.REQUEST,
+          payload: { path: "user", body: { message: "Hello" }, method: "GET" },
+        })
+      );
+    });
+    this.outcomingConnection.on("data", (data) => {
+      console.log("on data ;", data);
+    });
+    this.outcomingConnection.on("close", () => {
+      this.state$.next({
+        peerStatus: NetworkStatus.DISCONNECTED,
+        peerCount: Object.keys(this.peerClient.connections).length,
+      });
+    });
+
+    return () => {
+      this.peerClient.disconnect();
+      this.peerClient.destroy();
+    };
+  }
+
+  sink() {
+    return {
+      events$: this.events$.pipe(share()),
+      requests$: this.requests$.pipe(share()),
+      open$: this.serverConnect$.pipe(share()),
+      changeState$: this.updateState$,
+    };
+  }
+
+  private getConnections(): {[key: string]: DataConnection[]}{
+    return this.peerClient.connections;
+  }
+
+  emit(signal: PeerRequest | PeerEvent) {
+    const connections = this.getConnections()
+    this.peerClient.listAllPeers((ids) => {
+      ids.forEach((id) => {
+        if(connections[id])
+          connections[id].forEach(conn => {
+            conn.send(signal);
+          })
+      });
+    })
+    // this.masterEmitter$(request);
   }
 }

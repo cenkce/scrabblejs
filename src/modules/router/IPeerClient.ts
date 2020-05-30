@@ -9,6 +9,8 @@ export interface IPeerClient {
     open$: Observable<any>,
     changeState$: Observable<PeerClientState>
   };
+  createRequest(req: Omit<PeerRequest["payload"], "targetPeerId">): PeerRequest;
+  createEvent(req: Omit<PeerEvent["payload"], "targetPeerId">): PeerEvent;
   connect: (id:string) => (() => void) | undefined;
   emit(req: PeerRequest): void;
 }

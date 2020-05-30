@@ -5,74 +5,33 @@ import React, {
   useState,
   useContext,
 } from "react";
-import { Observable } from "rxjs";
-import { NetworkStatus } from "./NetworkStatus";
-import { PeerRequest } from "../router/PeerSignal";
 import { PeerService } from "modules/peers/Application";
-
-export const NetworkSetIDContext = createContext<(id: string) => void>(
-  () => {}
+import {
+  PeerClientState,
+  createInitialPeerClientState,
+} from "modules/router/PeerClientState";
+const initialState = createInitialPeerClientState();
+export const NetworkStateContext = createContext<PeerClientState>(
+  initialState
 );
-export const NetworkIdContext = createContext<string | null>(null);
-export const NetworkStatusContext = createContext<NetworkStatus>(
-  NetworkStatus.IDLE
-);
-export const NetworkChangeStatusContext = createContext<
-  (status: NetworkStatus) => void
->(() => {});
 
-export function NetworkProvider(props: PropsWithChildren<{}>) {
-  const [id, setId] = useState<string | null>(null);
+export function NetworkStateProvider(props: PropsWithChildren<{}>) {
+  const [state, setState] = useState<PeerClientState>(initialState);
   useEffect(() => {
-    PeerService.sink().open$.subscribe((id) => {
-      console.log("connect sink ", id);
-      setId(id);
-    })
-  }, [])
-  return (
-    <NetworkSetIDContext.Provider value={setId}>
-      <NetworkIdContext.Provider value={id}>
-        <NetworkStatusProvider>{props.children}</NetworkStatusProvider>
-      </NetworkIdContext.Provider>
-    </NetworkSetIDContext.Provider>
-  );
+    const sink = PeerService.sink();
+    const subscription = sink.changeState$.subscribe((state) => {
+      setState(state);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
+  return <NetworkStateContext.Provider value={state}>{props.children}</NetworkStateContext.Provider>;
 }
 
-function NetworkStatusProvider(props: PropsWithChildren<{}>) {
-  const [status, setStatus] = useState<NetworkStatus>(NetworkStatus.IDLE);
-
-  return (
-    <NetworkStatusContext.Provider value={status}>
-      <NetworkChangeStatusContext.Provider value={setStatus}>
-        {props.children}
-      </NetworkChangeStatusContext.Provider>
-    </NetworkStatusContext.Provider>
-  );
+export function useNetworkState(){
+  return useContext(NetworkStateContext);
 }
 
-export function useNetworkId() {
-  return useContext(NetworkIdContext);
-}
-
-export type MasterConnectionService = {
-  disconnect: () => void;
-  observable$: Observable<{
-    peerCount: number;
-  }>;
-};
-
-type streams =
-  | { type: "peer/create"; connId: string; peerCount: number; username: string }
-  | { type: "peer/delete"; connId: string }
-  | { type: "peer/request"; request: PeerRequest };
-export function useNetworkConnect() {
-  const networkId = useContext(NetworkIdContext);
-  const status = useContext(NetworkStatusContext);
-
-  useEffect(() => {
-
-  }, [])
-}
 // export function useNetworkConnect() {
 //   const networkId = useContext(NetworkIdContext);
 //   const setNetworkId = useContext(NetworkSetIDContext);

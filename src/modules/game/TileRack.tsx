@@ -6,7 +6,12 @@ import { PeerService } from "modules/peers/Application";
 import { PeerSignalType } from "modules/router/PeerSignal";
 
 export function TileRack(
-  props: PropsWithChildren<{ tiles: Tile[]; onDragTile: () => void; isValid: boolean, onTurnDone: () => void }>
+  props: PropsWithChildren<{
+    tiles: Tile[];
+    onDragTile: () => void;
+    isValid: boolean;
+    onTurnDone: () => void;
+  }>
 ) {
   return (
     <div className="TileRack">
@@ -21,18 +26,20 @@ export function TileRack(
         ))}
       </div>
       <div>
-        <Button type={"warn"} onClick={() => {
-          PeerService.emit({
-            type: PeerSignalType.REQUEST,
-            payload: {
-              body: {
-                name: "cenk",
-              },
-              method: "GET",
-              path: "users",
-            },
-          })
-        }}>
+        <Button
+          type={"warn"}
+          onClick={() => {
+            PeerService.emit(
+              PeerService.createRequest({
+                body: {
+                  name: "cenk",
+                },
+                method: "GET",
+                path: "users",
+              })
+            );
+          }}
+        >
           Turn
         </Button>
       </div>

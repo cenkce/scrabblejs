@@ -1,17 +1,19 @@
-import { PeerRequest } from "../PeerSignal";
+import { PeerRequest } from "./PeerSignal";
 import { Observable, OperatorFunction, of, from, empty } from "rxjs";
 import {
   switchMap,
   map,
   mergeScan,
   mergeMap,
+  scan,
 } from "rxjs/operators";
-import { PeerRouteMethod, PeerRequestHandler } from "../PeerRouterMethod";
-import { PeerResponse } from "../PeerResponse";
+import { PeerRouteMethod, PeerRequestHandler } from "./PeerRouterMethod";
+import { PeerResponse } from "./PeerResponse";
 
 export function controllerFactory(request$: Observable<PeerRequest>) {
+  // TODO: Move rootpath logic out
   return function Controller(
-    rootPath: string
+    rootPath?: string
   ): OperatorFunction<PeerRouteMethod[], PeerResponse> {
     const operator = switchMap<PeerRouteMethod[], Observable<PeerResponse>>((routes) => {
       return request$.pipe(
@@ -28,9 +30,8 @@ export function controllerFactory(request$: Observable<PeerRequest>) {
           })();
 
           return from(iterator).pipe(
-            mergeScan(
+            scan(
               (response, current) => {
-                console.log(response, current);
                 if(!hasNext){
                   iterator.return();
                 }
@@ -38,10 +39,9 @@ export function controllerFactory(request$: Observable<PeerRequest>) {
                   Object.assign(response.payload, current);
                 }
 
-                return of(response);
+                return response;
               },
-              response,
-              1
+              response
             )
           );
         })
