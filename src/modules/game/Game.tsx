@@ -29,6 +29,7 @@ export function Game() {
         onDragTile={DragTileHander}
         tiles={userLetters}
         isValid={true}
+        onTurnDone={() => {}}
       ></TileRack>
     </GameBoard>
   );
