@@ -1,12 +1,14 @@
 import React from "react";
-import { GameProvider } from "./GameContext";
 import { Game } from "./Game";
 import { LettersProvider } from "../letters/useLetters";
+import { GameProvider } from "./GameContext";
 
-export function GameModule(props: {}){
-  return <GameProvider>
+export function GameModule(props: {}) {
+  return (
     <LettersProvider>
-    <Game />
+        <GameProvider>
+          <Game />
+        </GameProvider>
     </LettersProvider>
-  </GameProvider>
-};
+  );
+}

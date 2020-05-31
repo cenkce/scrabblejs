@@ -1,4 +1,4 @@
-import { PeerRequestMethod } from "./PeerRequestMethod";
+import { PeerRequest } from "./PeerRequest";
 
 export enum PeerSignalType {
   "REQUEST" = "REQUEST",
@@ -24,11 +24,6 @@ export function instacenOfPeerEvent(data: any): data is PeerRequest {
 export type PeerEvent<TBody = any> = {
   type: PeerSignalType.EVENT;
   payload: { eventName: string; body: TBody; targetPeerId: string };
-};
-
-export type PeerRequest<TBody = any> = {
-  type: PeerSignalType.REQUEST;
-  payload: { path: string; body: TBody; method: PeerRequestMethod, targetPeerId: string };
 };
 
 export type PeerSignal = PeerEvent | PeerRequest;

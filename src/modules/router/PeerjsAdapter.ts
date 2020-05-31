@@ -17,9 +17,9 @@ import {
   PeerEvent,
   PeerSignalType,
   instacenOfPeerEvent,
-  PeerRequest,
   instacenOfPeerRequest,
 } from "./PeerSignal";
+import { PeerRequest } from "./PeerRequest";
 import { NetworkStatus } from "modules/router/NetworkStatus";
 
 interface IStreamable<T = any> {
@@ -35,10 +35,13 @@ type IPeerConnectionState = {
 function fromPeerEvent<T>(peer: Peer, event: string) {
   return fromEvent<T>(
     {
-      on: (event: string, cb) => {
-        peer.on(event, cb as any);
+      on: (event, cb: Function) => {
+        const c: any =(ev:any) => {
+          cb(ev)
+        };
+        peer.on(event, c);
       },
-      off: (event: string, cb: Function) => {
+      off: (event, cb: Function) => {
         peer.off(event, cb);
       },
     },
@@ -118,11 +121,16 @@ export class PeerjsClient implements IPeerClient {
   );;
 
   private events$ = this.incomingConnection$.pipe(
-    map<string, PeerEvent>((data) => JSON.parse(data)),
+    map<string, PeerEvent>((data) => {
+      return JSON.parse(data);
+    }),
     filter((data) => instacenOfPeerEvent(data))
   );
   private requests$ = this.incomingConnection$.pipe(
-    map<string, PeerRequest>((data) => JSON.parse(data)),
+    map<string, PeerRequest>((data) => {
+      console.log("requests : ", data);
+      return data as any;
+    }),
     filter((data) => instacenOfPeerRequest(data))
   );
 
@@ -130,7 +138,6 @@ export class PeerjsClient implements IPeerClient {
   private outcomingConnection?: DataConnection;
 
   constructor() {
-    this.peerClient.on('connection', (data) =>{})
     merge(this.serverConnect$, this.serverError$, this.serverDisconnect$).subscribe(() => {
 
     })
@@ -145,6 +152,8 @@ export class PeerjsClient implements IPeerClient {
     return {
       type: PeerSignalType.REQUEST,
       payload: {
+        path: "",
+        params: null,
         ...payload,
         targetPeerId: this.peerId,
       },
@@ -172,12 +181,6 @@ export class PeerjsClient implements IPeerClient {
         peerStatus: NetworkStatus.CONNECTED,
         peerCount: Object.keys(this.peerClient.connections).length,
       });
-      this.outcomingConnection?.send(
-        JSON.stringify({
-          type: PeerSignalType.REQUEST,
-          payload: { path: "user", body: { message: "Hello" }, method: "GET" },
-        })
-      );
     });
     this.outcomingConnection.on("data", (data) => {
       console.log("on data ;", data);

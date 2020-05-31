@@ -1,7 +1,7 @@
 import { IPeerClient } from "./IPeerClient";
 import { controllerFactory } from "./createControllerFactory";
 import { createListenerDecorator } from "./decorator/createListenerDecorator";
-import { PeerRequest } from "./PeerSignal";
+import { PeerRequest } from "./PeerRequest";
 import { OperatorFunction, Observable, of, Subject } from "rxjs";
 import { PeerRouteMethod } from "./PeerRouterMethod";
 import { switchMap } from "rxjs/operators";

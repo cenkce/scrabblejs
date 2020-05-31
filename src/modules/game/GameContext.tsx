@@ -1,26 +1,59 @@
-import React, { createContext, PropsWithChildren, useReducer, Reducer, Dispatch } from "react";
+import React, {
+  createContext,
+  PropsWithChildren,
+  useReducer,
+  Reducer,
+  useContext,
+} from "react";
+import { GameBoardProvider } from "./GameBoardStateContext";
+import { useGameController } from "./GameController";
 
-type GameState = {
+export type GameBoardState = {
   zoomRatio: number;
 };
 
-type GameActions = {}
+type GameState = {
+  players: Player[];
+};
+
+type Player = {
+  id: string;
+  name?: string;
+};
+
+export type GameBoardActions = {};
+type GameActions = {};
+
 const InitialGameState: GameState = {
-  zoomRatio: 1
+  players: [],
 };
 
 const GameStateContext = createContext<GameState>(InitialGameState);
-const GameDispatchContext = createContext<Dispatch<GameActions>>(() => {});
-
+const GameDispatchContext = createContext<GameActions>(() => {});
 const GameReducer: Reducer<GameState, GameActions> = (state, action) => {
+
+  return state;
+};
+
+export function useGameService(){
+  const state = useContext(GameStateContext);
+
   return state;
 }
 
-export function GameProvider(props:PropsWithChildren<{}>){
+export function useGameDispatch(){
+  return useContext(GameDispatchContext);
+}
+
+export function GameProvider(props: PropsWithChildren<{}>) {
   const [state, dispatch] = useReducer(GameReducer, InitialGameState);
-  return <GameStateContext.Provider value={state}>
-    <GameDispatchContext.Provider value={dispatch}>
-      {props.children}
-    </GameDispatchContext.Provider>
-  </GameStateContext.Provider>
+  useGameController();
+
+  return (
+    <GameStateContext.Provider value={state}>
+      <GameDispatchContext.Provider value={dispatch}>
+        <GameBoardProvider>{props.children}</GameBoardProvider>
+      </GameDispatchContext.Provider>
+    </GameStateContext.Provider>
+  );
 }

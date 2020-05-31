@@ -1,5 +1,6 @@
 import { Observable } from "rxjs/internal/Observable";
-import { PeerEvent, PeerRequest } from "./PeerSignal";
+import { PeerEvent } from "./PeerSignal";
+import { PeerRequest } from "./PeerRequest";
 import { PeerClientState } from "./PeerClientState";
 
 export interface IPeerClient {

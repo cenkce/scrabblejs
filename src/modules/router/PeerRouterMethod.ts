@@ -1,9 +1,13 @@
 import { PeerRequestMethod } from "./PeerRequestMethod";
-import { match, MatchFunction } from "path-to-regexp";
-import { PeerRequest } from "./PeerSignal";
+import { match, MatchFunction, Match } from "path-to-regexp";
+import { PeerRequest } from "./PeerRequest";
 import { PeerResponse } from "./PeerResponse";
 
-export type PeerRequestHandler<TBody=any> = (request: PeerRequest<TBody>, resp: PeerResponse, next: () => void) => unknown;
+export type PeerRequestHandler<TBody = any> = (
+  request: PeerRequest<TBody>,
+  resp: PeerResponse,
+  next: () => void
+) => unknown;
 
 function handlersCharger(
   handlersCall: (() => PeerRequestHandler)[] = []
@@ -13,7 +17,7 @@ function handlersCharger(
 ] {
   const handlersMap: WeakMap<{}, PeerRequestHandler> = new WeakMap();
   let size = 0;
-  
+
   const write = function* () {
     let handler: PeerRequestHandler;
     while ((handler = yield)) {
@@ -28,32 +32,36 @@ function handlersCharger(
   };
 
   const read = function* () {
-      // let callers: PeerRequestHandler[] = handlersCall.slice();
-      let i = 0;
-      while (i++ < size) {
-        yield handlersCall[i];
-      }
-    };
+    // let callers: PeerRequestHandler[] = handlersCall.slice();
+    let i = 0;
+    while (i++ < size) {
+      yield handlersCall[i];
+    }
+  };
   return [write, read];
 }
 
-
-export class PeerRouteMethod  {
+export class PeerRouteMethod {
   private _match: MatchFunction<any>[];
 
   constructor(
     private rootPath: string | string[],
     private handler: PeerRequestHandler,
-    private method: PeerRequestMethod = "GET",
+    private method: PeerRequestMethod = "GET"
   ) {
-    this._match = Array.isArray(this.rootPath) ? this.rootPath.map(path => match(path)) : [match(this.rootPath)];
+    this._match = Array.isArray(this.rootPath)
+      ? this.rootPath.map((path) => match(path, { end: true }))
+      : [match(this.rootPath)];
   }
 
   handle: PeerRequestHandler = (req, res, next) => {
     return this.handler(req, res, next);
-  }
+  };
 
-  match(request: PeerRequest) {
-    return request.payload.method === this.method && this._match.some(match => match(request.payload.path));
+  match<T extends object=any>(request: PeerRequest): Match<T> {
+    let res: Match<T> = false;
+    this._match.some((match) => (res = match(request.payload.path)));
+
+    return res;
   }
 }

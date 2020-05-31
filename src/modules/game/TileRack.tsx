@@ -1,9 +1,8 @@
-import React, { PropsWithChildren, MouseEventHandler } from "react";
+import React, { PropsWithChildren } from "react";
 import { Tile } from "./TileModel";
 import { TileView } from "./TileView";
 import { Button } from "shared/Button";
 import { PeerService } from "modules/peers/Application";
-import { PeerSignalType } from "modules/router/PeerSignal";
 
 export function TileRack(
   props: PropsWithChildren<{
@@ -35,7 +34,7 @@ export function TileRack(
                   name: "cenk",
                 },
                 method: "GET",
-                path: "users",
+                path: "game/letters/123423413",
               })
             );
           }}

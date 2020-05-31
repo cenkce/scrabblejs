@@ -1,9 +1,8 @@
-import { PeerRequest } from "./PeerSignal";
-import { Observable, OperatorFunction, of, from, empty } from "rxjs";
+import { PeerRequest } from "./PeerRequest";
+import { Observable, OperatorFunction, from } from "rxjs";
 import {
   switchMap,
   map,
-  mergeScan,
   mergeMap,
   scan,
 } from "rxjs/operators";
@@ -22,7 +21,10 @@ export function controllerFactory(request$: Observable<PeerRequest>) {
           const response: PeerResponse = {ok: true, status: 200, statusText: "", payload: {}};
           const iterator = (function* getRoute(){
             for(let route of routes){
-              if(route.match(request)){
+              const match = route.match(request);
+              if(match !== false){
+                request.payload.params = match.params;
+                request.payload.path = match.path;
                 hasNext = false;
                 yield route.handle(request, response, () => {hasNext = true});
               }

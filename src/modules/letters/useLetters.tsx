@@ -10,7 +10,7 @@ export function LettersProvider({ lang = 'tr', children }: PropsWithChildren<{ l
 }
 
 export function useLetters() {
-  const lettersContext = useContext(LettersContext);
+  const letters = useContext(LettersContext);
 
-  return lettersContext;
+  return letters;
 }
